@@ -15,7 +15,7 @@ spec:
         - values-dev.yaml
   destination:
     server: 'https://kubernetes.default.svc'
-    namespace: shortlylics-dev
+    namespace: shortlytics-dev
   syncPolicy:
     automated:
       prune: true
