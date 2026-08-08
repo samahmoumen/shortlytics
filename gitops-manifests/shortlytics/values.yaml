@@ -1,0 +1,42 @@
+global:
+  environment: default
+  imageRegistry: "shortlyticsacrx2rg.azurecr.io"
+
+azure:
+  keyVaultName: "shortlytics-kv-default"
+  workloadIdentityClientId: ""
+
+ingress:
+  enabled: true
+  className: "nginx"
+  host: "shortlytics.local"
+
+backend:
+  replicaCount: 1
+  autoscaling:
+    enabled: false
+  image:
+    repository: "shortlytics-backend"
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  service:
+    port: 8080
+  db:
+    server: "postgres" # Sera écrasé par les environnements
+    name: "shortlytics_db"
+
+frontend:
+  replicaCount: 1
+  autoscaling:
+    enabled: false
+  image:
+    repository: "shortlytics-frontend"
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  service:
+    port: 80
+
+postgres:
+  enabled: true
+  storageSize: 5Gi
+  database: "shortlytics_db"

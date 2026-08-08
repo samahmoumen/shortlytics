@@ -1,0 +1,28 @@
+{{- if .Values.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "shortlytics-chart.fullname" . }}-ingress
+  labels:
+    app.kubernetes.io/name: {{ include "shortlytics-chart.name" . }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  rules:
+    - host: {{ .Values.ingress.host }}
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "shortlytics-chart.fullname" . }}-backend
+                port:
+                  number: {{ .Values.backend.service.port | default 8080 }}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "shortlytics-chart.fullname" . }}-frontend
+                port:
+                  number: {{ .Values.frontend.service.port | default 80 }}
+{{- end -}}
