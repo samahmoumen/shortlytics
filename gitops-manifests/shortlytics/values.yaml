@@ -1,6 +1,6 @@
 global:
   environment: default
-  imageRegistry: "shortlyticsacrx2rg.azurecr.io"
+  imageRegistry: "shortlyticsdevacr3fbu.azurecr.io"
 
 azure:
   keyVaultName: "shortlytics-kv-default"
@@ -22,7 +22,7 @@ backend:
   service:
     port: 8080
   db:
-    server: "postgres" # Sera écrasé par les environnements
+    server: "postgres" 
     name: "shortlytics_db"
 
 frontend:
