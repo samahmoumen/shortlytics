@@ -1,9 +1,8 @@
 global:
   environment: dev
-
-azure:
-  keyVaultName: "shortlytics-dev-kv-3fbu" 
-  workloadIdentityClientId: "60960411-2813-48cb-94f2-2889cac4bb92"
+  azure:
+    keyVaultName: "shortlytics-dev-kv-3fbu" 
+    workloadIdentityClientId: "60960411-2813-48cb-94f2-2889cac4bb92"
 
 ingress:
   host: "dev.shortlytics.internal"
