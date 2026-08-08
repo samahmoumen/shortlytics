@@ -1,0 +1,22 @@
+{{- if .Values.postgres.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-postgres-allow-backend
+  labels:
+    app: {{ .Release.Name }}-postgres
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ .Release.Name }}-postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: {{ .Release.Name }}-backend 
+      ports:
+        - protocol: TCP
+          port: 5432
+{{- end }}

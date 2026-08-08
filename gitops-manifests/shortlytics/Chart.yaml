@@ -1,0 +1,15 @@
+apiVersion: v2
+name: shortlytics-chart
+description: Umbrella Helm chart for Shortlytics full-stack platform
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+dependencies:
+  - name: backend
+    version: "0.1.0"
+    repository: "file://charts/backend"
+    condition: backend.enabled
+  - name: frontend
+    version: "0.1.0"
+    repository: "file://charts/frontend"
+    condition: frontend.enabled

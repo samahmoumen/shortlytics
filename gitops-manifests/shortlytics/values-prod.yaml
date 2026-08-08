@@ -1,0 +1,45 @@
+global:
+  environment: prod
+
+azure:
+  keyVaultName: "shortlytics-kv-prod"
+  workloadIdentityClientId: "xxxx"
+
+ingress:
+  host: "shortlytics.com"
+
+backend:
+  replicaCount: 2
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+  image:
+    tag: "v1.0.0"
+  db:
+    server: "shortlytics-prod-postgres" 
+    name: "shortlytics-prod-db"
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1024Mi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+
+frontend:
+  replicaCount: 2
+  image:
+    tag: "v1.0.0"
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 200m
+      memory: 256Mi 
+
+postgres:
+  database: "shortlytics-prod-db"
+  storageSize: 20Gi

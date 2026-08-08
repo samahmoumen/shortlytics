@@ -1,0 +1,40 @@
+global:
+  environment: dev
+
+azure:
+  keyVaultName: "shortlytics-kv-x2rg"
+  workloadIdentityClientId: "b0ce56fd-0c5c-4fa0-b9ed-503df1f67926"
+
+ingress:
+  host: "dev.shortlytics.internal"
+
+backend:
+  image:
+    tag: "dev-latest"
+    pullPolicy: Always
+  db:
+    server: "shortlytics-dev-postgres" 
+    name: "shortlytics-dev-db"
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+
+frontend:
+  image:
+    tag: "dev-latest"
+    pullPolicy: Always
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi 
+
+postgres:
+  database: "shortlytics-dev-db"
+  storageSize: 2Gi
