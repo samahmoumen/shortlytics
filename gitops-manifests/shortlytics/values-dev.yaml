@@ -10,7 +10,7 @@ ingress:
 
 backend:
   image:
-    tag: "dev-latest"
+    tag: "579e320"
     pullPolicy: Always
   db:
     server: "shortlytics-dev-postgres" 
@@ -25,7 +25,7 @@ backend:
 
 frontend:
   image:
-    tag: "dev-latest"
+    tag: "579e320"
     pullPolicy: Always
   resources:
     limits:
