@@ -33,12 +33,12 @@ spec:
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
-                  name: shortlytics-chart-db-secret
+                  name: {{ include "shortlytics-chart.fullname" . }}-db-secret
                   key: POSTGRES_USER
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: shortlytics-chart-db-secret
+                  name: {{ include "shortlytics-chart.fullname" . }}-db-secret
                   key: POSTGRES_PASSWORD
           volumeMounts:
             - name: postgres-data
