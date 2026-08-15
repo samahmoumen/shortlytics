@@ -1,6 +1,7 @@
 global:
   environment: dev
   azure:
+    tenantId: "a99950fd-2582-4f30-916e-fc061b7a258b"
     keyVaultName: "shortlytics-dev-kv-mrqc"
     workloadIdentityClientId: "724cfbf0-2003-4739-b029-c4c22cd398a8"
   imageRegistry: shortlyticsdevacrmrqc.azurecr.io
