@@ -6,7 +6,7 @@ metadata:
   labels:
     app: {{ .Release.Name }}-postgres
 spec:
-  serviceName: {{ .Release.Name }}-postgres 
+  serviceName: {{ .Release.Name }}-postgres
   replicas: 1
   selector:
     matchLabels:
@@ -17,7 +17,7 @@ spec:
         app: {{ .Release.Name }}-postgres
     spec:
       securityContext:
-        fsGroup: 999 
+        fsGroup: 999
       containers:
         - name: postgres
           image: postgres:15-alpine
@@ -47,7 +47,8 @@ spec:
     - metadata:
         name: postgres-data
       spec:
-        accessModes: [ "ReadWriteOnce" ]
+        accessModes:
+          - ReadWriteOnce
         resources:
           requests:
             storage: {{ .Values.postgres.storageSize }}
