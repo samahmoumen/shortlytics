@@ -9,7 +9,7 @@ ingress:
   host: "dev.shortlytics.internal"
 backend:
   image:
-    tag: "4f59d4d"
+    tag: "a77cd5f"
     pullPolicy: Always
   db:
     server: "shortlytics-dev-postgres"
@@ -23,7 +23,7 @@ backend:
       memory: 128Mi
 frontend:
   image:
-    tag: "4f59d4d"
+    tag: "a77cd5f"
     pullPolicy: Always
   resources:
     limits:
