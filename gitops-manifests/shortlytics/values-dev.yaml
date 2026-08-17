@@ -2,14 +2,14 @@ global:
   environment: dev
   azure:
     tenantId: "a99950fd-2582-4f30-916e-fc061b7a258b"
-    keyVaultName: "shortlytics-dev-kv-mrqc"
-    workloadIdentityClientId: "724cfbf0-2003-4739-b029-c4c22cd398a8"
-  imageRegistry: shortlyticsdevacrmrqc.azurecr.io
+    keyVaultName: "shortlytics-dev-kv"
+    workloadIdentityClientId: "ef0fb99d-5747-48a7-9807-78dcba981acf"
+  imageRegistry: shortlyticsdevacrkrcx.azurecr.io
 ingress:
   host: "dev.shortlytics.internal"
 backend:
   image:
-    tag: "7f153ae"
+    tag: "1372d39"
     pullPolicy: Always
   db:
     server: "shortlytics-dev-postgres"
@@ -23,7 +23,7 @@ backend:
       memory: 128Mi
 frontend:
   image:
-    tag: "7f153ae"
+    tag: "1372d39"
     pullPolicy: Always
   resources:
     limits:
