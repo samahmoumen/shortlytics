@@ -3,6 +3,27 @@ kind: Application
 metadata:
   name: shortlytics-dev
   namespace: argocd
+  annotations:
+    # 1. Map alias 'backend' and 'frontend' to your ACR image paths
+    argocd-image-updater.argoproj.io/image-list: |
+      backend=shortlyticsdevacrkrcx.azurecr.io/backend,
+      frontend=shortlyticsdevacrkrcx.azurecr.io/frontend
+    
+    # 2. Point both to your ACR pull secret for API polling
+    argocd-image-updater.argoproj.io/backend.pull-secret: pullsecret:argocd/acr-secret
+    argocd-image-updater.argoproj.io/frontend.pull-secret: pullsecret:argocd/acr-secret
+
+    # 3. Choose update strategy (e.g., latest tag or git commit SHA sorting)
+    argocd-image-updater.argoproj.io/backend.update-strategy: latest
+    argocd-image-updater.argoproj.io/frontend.update-strategy: latest
+
+    # 4. Target the exact helm parameters inside values-dev.yaml
+    argocd-image-updater.argoproj.io/backend.helm-param: backend.image.tag
+    argocd-image-updater.argoproj.io/frontend.helm-param: frontend.image.tag
+
+    # 5. Enable Git Write-Back so Image Updater commits the new tag back to GitHub (develop branch)
+    argocd-image-updater.argoproj.io/write-back-method: git:secret:argocd/git-credentials
+    argocd-image-updater.argoproj.io/git-branch: develop
 spec:
   project: default
   source:

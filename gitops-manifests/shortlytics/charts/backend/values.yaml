@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: shortlyticsdevacr3fbu.azurecr.io/shortlytics-backend
+  repository: shortlytics-backend
   tag: "latest"
   pullPolicy: IfNotPresent
 
