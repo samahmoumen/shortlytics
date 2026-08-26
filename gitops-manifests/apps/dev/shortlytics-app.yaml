@@ -6,8 +6,8 @@ metadata:
   annotations:
     # 1. Map alias 'backend' and 'frontend' to your ACR image paths
     argocd-image-updater.argoproj.io/image-list: |
-      backend=shortlyticsdevacrkrcx.azurecr.io/backend,
-      frontend=shortlyticsdevacrkrcx.azurecr.io/frontend
+       backend=shortlyticsdevacrkrcx.azurecr.io/shortlytics-backend,
+       frontend=shortlyticsdevacrkrcx.azurecr.io/shortlytics-frontend
     
     # 2. Point both to your ACR pull secret for API polling
     argocd-image-updater.argoproj.io/backend.pull-secret: pullsecret:argocd/acr-secret

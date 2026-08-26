@@ -18,6 +18,7 @@ spec:
     spec:
       securityContext:
         fsGroup: 999
+        fsGroupChangePolicy: "OnRootMismatch"
       containers:
         - name: postgres
           image: postgres:15-alpine
@@ -28,6 +29,8 @@ spec:
             runAsGroup: 999
             allowPrivilegeEscalation: false
           env:
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
             - name: POSTGRES_DB
               value: {{ .Values.postgres.database | quote }}
             - name: POSTGRES_USER
@@ -43,6 +46,7 @@ spec:
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
+              subPath: postgres
   volumeClaimTemplates:
     - metadata:
         name: postgres-data

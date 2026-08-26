@@ -23,7 +23,7 @@ spec:
       serviceAccountName: {{ include "shortlytics-chart.fullname" . }}-backend-sa
       containers:
         - name: backend
-          image: "{{ .Values.image.registry }}/shortlytics-backend:{{ .Values.image.tag }}"
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
