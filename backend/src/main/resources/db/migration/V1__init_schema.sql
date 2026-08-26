@@ -1,5 +1,5 @@
 -- 1. Table users
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id BIGSERIAL PRIMARY KEY,
     email VARCHAR(255),
     username VARCHAR(255),
@@ -8,7 +8,7 @@ CREATE TABLE users (
 );
 
 -- 2. Table url_mapping
-CREATE TABLE url_mapping (
+CREATE TABLE IF NOT EXISTS url_mapping (
     id BIGSERIAL PRIMARY KEY,
     original_url VARCHAR(255),
     short_url VARCHAR(255),
@@ -19,7 +19,7 @@ CREATE TABLE url_mapping (
 );
 
 -- 3. Table click_event
-CREATE TABLE click_event (
+CREATE TABLE IF NOT EXISTS click_event (
     id BIGSERIAL PRIMARY KEY,
     click_date TIMESTAMP,
     url_mapping_id BIGINT,
