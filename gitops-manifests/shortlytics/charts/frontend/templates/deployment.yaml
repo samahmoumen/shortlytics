@@ -22,16 +22,14 @@ spec:
       serviceAccountName: {{ include "shortlytics-chart.fullname" . }}-frontend-sa
       containers:
         - name: frontend
-          image: "{{ .Values.image.registry }}/shortlytics-frontend:{{ .Values.image.tag }}"
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           resources:
-             {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml .Values.resources | nindent 12 }}
           ports:
             - name: http
               containerPort: 80
               protocol: TCP
-          resources:
-            {{- toYaml .Values.resources | nindent 12 }}
           livenessProbe:
             httpGet:
               path: /

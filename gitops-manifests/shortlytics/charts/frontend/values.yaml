@@ -1,18 +1,22 @@
 replicaCount: 1
+
 image:
   repository: shortlytics-frontend
   tag: "latest"
   pullPolicy: IfNotPresent
+
 service:
   type: ClusterIP
   port: 80
-resources:
+
+resources: 
   limits:
     cpu: 200m
     memory: 256Mi
   requests:
     cpu: 50m
     memory: 128Mi
+
 autoscaling:
   enabled: false
   minReplicas: 1
