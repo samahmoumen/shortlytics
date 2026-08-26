@@ -23,28 +23,29 @@ spec:
       serviceAccountName: {{ include "shortlytics-chart.fullname" . }}-backend-sa
       containers:
         - name: backend
-          image: "{{ .Values.global.imageRegistry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml .Values.backend.resources | nindent 12 }}
           ports:
             - name: http
               containerPort: 8080
               protocol: TCP
           env:
-            - name: DATABASE_HOST
-              value: {{ .Values.db.server | quote }}
-            - name: DATABASE_NAME
-              value: {{ .Values.db.name | quote }}
-            - name: POSTGRES_USER
+            # 1. URL JDBC attendue par Spring Boot dans ton application.properties
+            - name: DB_URL
+              value: "jdbc:postgresql://{{ .Values.backend.db.server }}:5432/{{ .Values.backend.db.name }}"
+            
+            # 2. Utilisateur & Mot de passe issus du secret généré par ESO
+            - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: shortlytics-dev-backend-db-secret
+                  name: {{ include "shortlytics-chart.fullname" . }}-db-secret
                   key: POSTGRES_USER
-            - name: POSTGRES_PASSWORD
+            - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: shortlytics-dev-backend-db-secret
+                  name: {{ include "shortlytics-chart.fullname" . }}-db-secret
                   key: POSTGRES_PASSWORD
           livenessProbe:
             httpGet:
