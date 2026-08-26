@@ -23,20 +23,17 @@ spec:
       serviceAccountName: {{ include "shortlytics-chart.fullname" . }}-backend-sa
       containers:
         - name: backend
-          image: "{{ .Values.global.imageRegistry }}/{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
-          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          image: "{{ .Values.global.imageRegistry }}/{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           resources:
-            {{- toYaml .Values.backend.resources | nindent 12 }}
+            {{- toYaml .Values.resources | nindent 12 }}
           ports:
             - name: http
               containerPort: 8080
               protocol: TCP
           env:
-            # 1. URL JDBC attendue par Spring Boot dans ton application.properties
             - name: DB_URL
-              value: "jdbc:postgresql://{{ .Values.backend.db.server }}:5432/{{ .Values.backend.db.name }}"
-            
-            # 2. Utilisateur & Mot de passe issus du secret généré par ESO
+              value: "jdbc:postgresql://{{ .Values.db.server }}:5432/{{ .Values.db.name }}"
             - name: DB_USERNAME
               valueFrom:
                 secretKeyRef:
