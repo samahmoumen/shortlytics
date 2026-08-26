@@ -5,25 +5,32 @@ global:
     keyVaultName: "shortlytics-dev-kv"
     workloadIdentityClientId: "561d2b1f-f611-4dd7-98c6-ae872a118981"
   imageRegistry: shortlyticsdevacr52t1.azurecr.io
+
 ingress:
   host: "dev.shortlytics.internal"
+
+# Surcharge des valeurs du sous-chart Backend
 backend:
   image:
-    tag: "53f6b99"
+    repository: shortlytics-backend
+    tag: "1402602"
     pullPolicy: Always
   db:
     server: "shortlytics-dev-postgres"
     name: "shortlytics-dev-db"
   resources:
     limits:
-      cpu: 200m
-      memory: 256Mi
+      cpu: 500m
+      memory: 512Mi
     requests:
-      cpu: 50m
-      memory: 128Mi
+      cpu: 100m
+      memory: 256Mi
+
+# Surcharge des valeurs du sous-chart Frontend
 frontend:
   image:
-    tag: "53f6b99"
+    repository: shortlytics-frontend
+    tag: "1402602"
     pullPolicy: Always
   resources:
     limits:
@@ -32,6 +39,7 @@ frontend:
     requests:
       cpu: 50m
       memory: 128Mi
+
 postgres:
   database: "shortlytics-dev-db"
   storageSize: 2Gi
