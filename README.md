@@ -47,7 +47,7 @@ Make sure you have the following tools installed on your local machine:
 * **Java SDK** (v17 or higher)
 * **Node.js** (v18+) & **npm**
 * **Docker** & **Kubernetes CLI (`kubectl`)**
-* **Terraform** (v1.5+) or **OpenTofu**
+* **Terraform** (v1.5+) 
 * **Helm** (v3+)
 * **Azure CLI** (if provisioning resources on Azure)
 
@@ -165,7 +165,4 @@ The `scripts/` directory provides helper utilities to streamline workflows:
 
 * **No Plaintext Secrets:** Sensitive values (like `jwt.secret` or DB credentials) are managed via environment variables and injected securely using **External Secrets Operator** integrated with **Azure Key Vault**.
 * **State Management:** Terraform state files (`*.tfstate`) and execution plans (`*.tfplan`) are strictly ignored via `.gitignore` to prevent leaking secrets.
-
-
-
 ```
