@@ -1,0 +1,27 @@
+# --- Terraform ---
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+*.tfvars.json
+crash.log
+crash.*.log
+
+# --- macOS ---
+.DS_Store
+
+# --- IDEs ---
+.vscode/
+.idea/
+
+# --- Java / Maven (Backend) ---
+target/
+*.jar
+*.war
+*.class
+
+# --- Node.js / React (Frontend) ---
+node_modules/
+build/
+dist/
