@@ -182,10 +182,10 @@ The redirect endpoint is intentionally public: the short URL itself is the publi
 ```mermaid
 flowchart LR
     DASH[Dashboard]
-    API[GET /api/urls/analytics/{shortUrl}]
+    API["GET /api/urls/analytics/{shortUrl}"]
     REPO[ClickEventRepository]
     DB[(PostgreSQL)]
-    AGG[Group events by calendar date]
+    AGG["Group events by calendar date"]
 
     DASH --> API
     API --> REPO
