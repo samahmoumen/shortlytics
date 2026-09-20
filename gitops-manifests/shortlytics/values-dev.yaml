@@ -6,8 +6,8 @@ global:
     workloadIdentityClientId: "1cd5e551-dfed-472c-981f-0c71a1fb4b8f"
   imageRegistry: shortlyticsdevacr8y76.azurecr.io
 ingress:
+  className: webapprouting.kubernetes.azure.com
   host: "dev.shortlytics.internal"
-# Surcharge des valeurs du sous-chart Backend
 backend:
   image:
     repository: shortlytics-backend
