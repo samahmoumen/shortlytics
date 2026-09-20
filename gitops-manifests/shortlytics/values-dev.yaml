@@ -18,8 +18,8 @@ backend:
     name: "shortlytics-dev-db"
   resources:
     limits:
-      cpu: 500m
-      memory: 512Mi
+      cpu: 1000m
+      memory: 768Mi
     requests:
       cpu: 100m
       memory: 256Mi
