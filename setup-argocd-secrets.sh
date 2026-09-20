@@ -3,7 +3,7 @@ set -e
 
 # Configuration variables
 RESOURCE_GROUP="shortlytics-dev-rg"
-ACR_NAME="shortlyticsdevacrkrcx"
+ACR_NAME="shortlyticsdevacr8y76"
 NAMESPACE="argocd"
 GIT_REPO="https://github.com/samahmoumen/shortlytics.git"
 GIT_USER="samahmoumen"
