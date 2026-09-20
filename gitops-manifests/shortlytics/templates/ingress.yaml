@@ -15,14 +15,14 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: {{ include "shortlytics-chart.fullname" . }}-backend
+                name: {{ .Release.Name }}-backend-backend
                 port:
                   number: {{ .Values.backend.service.port | default 8080 }}
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: {{ include "shortlytics-chart.fullname" . }}-frontend
+                name: {{ .Release.Name }}-frontend-frontend
                 port:
                   number: {{ .Values.frontend.service.port | default 80 }}
 {{- end -}}
