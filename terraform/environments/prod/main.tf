@@ -30,5 +30,5 @@ module "security" {
   tenant_id                                 = data.azurerm_client_config.current.tenant_id
   aks_oidc_issuer_url                       = module.compute.oidc_issuer_url
   aks_kubelet_identity_object_id            = module.compute.kubelet_identity_object_id
-  aks_key_vault_secrets_provider_object_id = module.compute.key_vault_secrets_provider_object_id
+  
 }

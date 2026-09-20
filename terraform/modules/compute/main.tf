@@ -4,6 +4,8 @@ variable "location" { type = string }
 variable "project_prefix" { type = string }
 variable "subnet_id" { type = string }
 
+
+
 # --- modules/compute/main.tf ---
 resource "azurerm_kubernetes_cluster" "aks" {
   name                      = "${var.project_prefix}-aks"

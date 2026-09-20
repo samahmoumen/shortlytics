@@ -55,6 +55,7 @@ resource "azurerm_container_registry" "acr" {
   admin_enabled       = false
 }
 
+
 # Key Vault
 resource "azurerm_key_vault" "kv" {
   name                        = "${var.project_prefix}-kv"
@@ -119,3 +120,5 @@ resource "azurerm_role_assignment" "terraform_user_kv_officer" {
   role_definition_name = "Key Vault Secrets Officer"
   principal_id         = data.azurerm_client_config.current.object_id
 }
+
+
