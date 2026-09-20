@@ -44,23 +44,23 @@ spec:
                 secretKeyRef:
                   name: {{ include "shortlytics-chart.fullname" . }}-db-secret
                   key: POSTGRES_PASSWORD
+          # TEMPORARY: TCP probes while /actuator/health/** returns 403.
+          # Revert to httpGet on /actuator/health/liveness and /readiness
+          # once the security config permits those paths.
           startupProbe:
-            httpGet:
-              path: /actuator/health/liveness
+            tcpSocket:
               port: http
             periodSeconds: 5
             timeoutSeconds: 3
             failureThreshold: 36
           livenessProbe:
-            httpGet:
-              path: /actuator/health/liveness
+            tcpSocket:
               port: http
             periodSeconds: 10
             timeoutSeconds: 3
             failureThreshold: 3
           readinessProbe:
-            httpGet:
-              path: /actuator/health/readiness
+            tcpSocket:
               port: http
             periodSeconds: 10
             timeoutSeconds: 3
