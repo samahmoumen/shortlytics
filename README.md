@@ -113,6 +113,79 @@ Use `terraform/environments/prod` for production. Other helpers: `scripts/sync-i
 
 Protected endpoints expect `Authorization: Bearer <JWT>`.
 
+## Database schema
+
+The domain has three entities, mapped with Spring Data JPA in `backend/src/main/java/com/url/shortener/models/`. The schema is created and versioned by Flyway migrations, and Hibernate only validates it (`ddl-auto=validate`).
+
+```mermaid
+erDiagram
+    USER ||--o{ URL_MAPPING : owns
+    URL_MAPPING ||--o{ CLICK_EVENT : records
+
+    USER {
+        bigint id PK
+        string username
+        string email
+        string password
+        string role
+    }
+
+    URL_MAPPING {
+        bigint id PK
+        string original_url
+        string short_url
+        bigint click_count
+        datetime created_date
+        bigint user_id FK
+    }
+
+    CLICK_EVENT {
+        bigint id PK
+        datetime click_date
+        bigint url_mapping_id FK
+    }
+```
+
+- A **user** owns many **URL mappings**, and a mapping has many **click events**.
+- Passwords are stored as BCrypt hashes, and new users get `ROLE_USER`.
+- `click_count` is a quick aggregate for display, and `click_event` keeps one row per click for time-based analytics.
+
+Simplified entity mapping:
+
+```java
+@Entity
+public class UrlMapping {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String originalUrl;
+    private String shortUrl;          // 8-character alphanumeric code
+    private int clickCount;
+    private LocalDateTime createdDate;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;                // owner
+
+    @OneToMany(mappedBy = "urlMapping")
+    private List<ClickEvent> clickEvents;
+}
+
+@Entity
+public class ClickEvent {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private LocalDateTime clickDate;
+
+    @ManyToOne
+    @JoinColumn(name = "url_mapping_id")
+    private UrlMapping urlMapping;
+}
+```
+
 ## Key decisions
 
 - **Workload Identity over client secrets:** no Azure credentials in pods, images or Git.
@@ -137,5 +210,6 @@ shortlytics/
 ├── gitops-manifests/   # Kubernetes / Helm / Argo CD config
 ├── scripts/            # Deployment helpers
 ├── terraform/          # bootstrap, environments (dev, prod), modules
-├── docs/architecture.png
+├── images/             # README images
 └── README.md
+```
