@@ -18,11 +18,11 @@ backend:
     name: "shortlytics-dev-db"
   resources:
     limits:
-      cpu: 500m
-      memory: 512Mi
+      cpu: "1"
+      memory: 768Mi
     requests:
-      cpu: 100m
-      memory: 256Mi
+      cpu: 250m
+      memory: 384Mi
 # Surcharge des valeurs du sous-chart Frontend
 frontend:
   image:
