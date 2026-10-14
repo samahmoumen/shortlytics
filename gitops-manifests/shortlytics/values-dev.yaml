@@ -11,7 +11,7 @@ ingress:
 backend:
   image:
     repository: shortlytics-backend
-    tag: "5b4aa6c"
+    tag: "3800c7d"
     pullPolicy: Always
   db:
     server: "shortlytics-dev-postgres"
@@ -27,7 +27,7 @@ backend:
 frontend:
   image:
     repository: shortlytics-frontend
-    tag: "5b4aa6c"
+    tag: "3800c7d"
     pullPolicy: Always
   resources:
     limits:
