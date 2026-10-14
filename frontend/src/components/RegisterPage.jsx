@@ -27,7 +27,7 @@ const RegisterPage = () => {
         setLoader(true);
         try {
             const { data: response } = await api.post(
-                "/auth/public/register",
+                "/api/auth/public/register",
                 data
             );
             reset();
