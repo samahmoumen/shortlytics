@@ -3,15 +3,15 @@ global:
   azure:
     tenantId: "a99950fd-2582-4f30-916e-fc061b7a258b"
     keyVaultName: "shortlytics-dev-kv"
-    workloadIdentityClientId: "2cc7405f-d5d4-45ac-adfe-63a485994f84"
-  imageRegistry: shortlyticsdevacrsbun.azurecr.io
+    workloadIdentityClientId: "09a067a5-c7c5-419b-a032-0b0bf58e26c1"
+  imageRegistry: shortlyticsdevacr82ss.azurecr.io
 ingress:
   host: "dev.shortlytics.internal"
 # Surcharge des valeurs du sous-chart Backend
 backend:
   image:
     repository: shortlytics-backend
-    tag: "813bbb3"
+    tag: "bf920ae"
     pullPolicy: Always
   db:
     server: "shortlytics-dev-postgres"
@@ -27,7 +27,7 @@ backend:
 frontend:
   image:
     repository: shortlytics-frontend
-    tag: "813bbb3"
+    tag: "bf920ae"
     pullPolicy: Always
   resources:
     limits:
