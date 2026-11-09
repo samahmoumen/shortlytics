@@ -1,5 +1,6 @@
 global:
   environment: prod
+  ingressHost: "shortlytics.com"
 
 azure:
   keyVaultName: "shortlytics-kv-prod"

@@ -1,6 +1,7 @@
 global:
   environment: default
   imageRegistry: "shortlyticsdevacr3fbu.azurecr.io"
+  ingressHost: "shortlytics.local"
 
 azure:
   keyVaultName: "shortlytics-kv-default"

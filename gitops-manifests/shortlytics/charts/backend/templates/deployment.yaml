@@ -32,6 +32,10 @@ spec:
               containerPort: 8080
               protocol: TCP
           env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: {{ .Values.global.environment | default "dev" | quote }}
+            - name: FRONTEND_URL
+              value: "http://{{ .Values.global.ingressHost }}"
             - name: DB_URL
               value: "jdbc:postgresql://{{ .Values.db.server }}:5432/{{ .Values.db.name }}"
             - name: DB_USERNAME
@@ -44,6 +48,11 @@ spec:
                 secretKeyRef:
                   name: {{ include "shortlytics-chart.fullname" . }}-db-secret
                   key: POSTGRES_PASSWORD
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "shortlytics-chart.fullname" . }}-db-secret
+                  key: JWT_SECRET
           startupProbe:
             httpGet:
               path: /actuator/health/liveness

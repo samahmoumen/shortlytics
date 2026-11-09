@@ -5,6 +5,7 @@ global:
     keyVaultName: "shortlytics-dev-kv"
     workloadIdentityClientId: "fea7353b-2637-4880-aa0e-daf77ee79cec"
   imageRegistry: shortlyticsdevacrr6zn.azurecr.io
+  ingressHost: "dev.shortlytics.internal"
 ingress:
   host: "dev.shortlytics.internal"
 # Surcharge des valeurs du sous-chart Backend

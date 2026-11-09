@@ -36,15 +36,23 @@ const CreateNewShorten = ({ setOpen, refetch }) => {
           });
 
           const shortenUrl = `${import.meta.env.VITE_REACT_FRONT_END_URL + "/s/" + `${res.shortUrl}`}`;
-          navigator.clipboard.writeText(shortenUrl).then(() => {
-            toast.success("Short URL Copied to Clipboard", {
-                position: "bottom-center",
-                className: "mb-5",
-                duration: 3000,
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(shortenUrl).then(() => {
+              toast.success("Short URL Copied to Clipboard", {
+                  position: "bottom-center",
+                  className: "mb-5",
+                  duration: 3000,
+              });
+            }).catch(() => {
+              toast.success("Short URL Created Successfully!");
             });
-          });
+          } else {
+            toast.success("Short URL Created Successfully!");
+          }
 
-          // await refetch();
+          if (refetch) {
+            await refetch();
+          }
           reset();
           setOpen(false);
     } catch (error) {
