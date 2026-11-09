@@ -35,7 +35,11 @@ const ShortenItem = ({ originalUrl, shortUrl, clickCount, createdDate }) => {
     const fetchMyShortUrl = async () => {
         setLoader(true);
         try {
-             const { data } = await api.get(`/api/urls/analytics/${selectedUrl}?startDate=shortlytics-dev-09-13T00:00:00&endDate=2027-12-31T23:59:59`, {
+             const now = new Date();
+             const startDate = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()).toISOString().split(".")[0];
+             const endDate = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate()).toISOString().split(".")[0];
+
+             const { data } = await api.get(`/api/urls/analytics/${selectedUrl}?startDate=${startDate}&endDate=${endDate}`, {
                         headers: {
                           "Content-Type": "application/json",
                           Accept: "application/json",
@@ -72,12 +76,13 @@ const ShortenItem = ({ originalUrl, shortUrl, clickCount, createdDate }) => {
                 {subDomain + "/" + `${shortUrl}`}
             </a> */}
 
-            <Link
-              target='_'
+            <a
+              target='_blank'
+              rel='noopener noreferrer'
               className='text-[17px]  font-montserrat font-[600] text-linkColor'
-              to={import.meta.env.VITE_REACT_FRONT_END_URL + "/s/" + `${shortUrl}`}>
+              href={`/s/${shortUrl}`}>
                   {subDomain + "/s/" + `${shortUrl}`}
-            </Link>
+            </a>
             <FaExternalLinkAlt className="text-linkColor" />
             </div>
 

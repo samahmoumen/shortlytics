@@ -19,24 +19,25 @@ ChartJS.register(
   Filler
 );
 
-const Graph = ({ graphData }) => {
-  const labels = graphData?.map((item, i) => `${item.clickDate}`);
-  const userPerDaya = graphData?.map((item) => item.count);
+const Graph = ({ graphData = [] }) => {
+  const safeData = Array.isArray(graphData) ? graphData : [];
+  const labels = safeData.map((item, i) => `${item.clickDate}`);
+  const userPerDaya = safeData.map((item) => item.count);
 
   const data = {
     labels:
-     graphData.length > 0
+     safeData.length > 0
         ? labels
         : ["", "", "", "", "", "", "", "", "", "", "", "", "", ""],
     datasets: [
       {
         label: "Total Clicks",
         data:
-         graphData.length > 0
+         safeData.length > 0
             ? userPerDaya
             : [1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2, 1],
         backgroundColor:
-         graphData.length > 0 ? "#3b82f6" : "rgba(54, 162, 235, 0.1)",
+         safeData.length > 0 ? "#3b82f6" : "rgba(54, 162, 235, 0.1)",
         borderColor: "#1D2327",
         pointBorderColor: "red",
         fill: true,

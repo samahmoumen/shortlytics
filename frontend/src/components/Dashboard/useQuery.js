@@ -32,8 +32,12 @@ export const useFetchMyShortUrls = (token, onError) => {
 export const useFetchTotalClicks = (token, onError) => {
     return useQuery("url-totalclick",
          async () => {
+            const now = new Date();
+            const startDate = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()).toISOString().split("T")[0];
+            const endDate = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate()).toISOString().split("T")[0];
+
             return await api.get(
-                 "/api/urls/totalClicks?startDate=shortlytics-dev-09-13&endDate=2027-12-31",
+                 `/api/urls/totalClicks?startDate=${startDate}&endDate=${endDate}`,
             {
                 headers: {
                     "Content-Type": "application/json",
