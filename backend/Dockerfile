@@ -3,21 +3,20 @@ WORKDIR /app
 
 COPY mvnw ./
 COPY .mvn/ .mvn/
-
 RUN chmod +x mvnw
 
 COPY pom.xml ./
-RUN ./mvnw dependency:go-offline
+RUN ./mvnw --batch-mode --no-transfer-progress dependency:go-offline
 
 COPY src ./src
-RUN ./mvnw clean package -DskipTests
+RUN ./mvnw --batch-mode --no-transfer-progress clean package -DskipTests
 
 FROM eclipse-temurin:23-jre
-
 WORKDIR /app
 
-COPY --from=build /app/target/*.jar app.jar
+RUN groupadd --system --gid 10001 app && useradd --system --uid 10001 --gid app app
+COPY --from=build --chown=app:app /app/target/*.jar /app/app.jar
 
+USER 10001:10001
 EXPOSE 8080
-
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

@@ -10,12 +10,10 @@ variable "k8s_namespace" {
   default = "shortlytics-dev"
 }
 
-# --- THIS IS THE FIX ---
 variable "k8s_service_account_name" {
   type    = string
-  default = "shortlytics-dev-backend-backend-sa" 
+  default = "shortlytics-dev-backend-backend-sa"
 }
-# -----------------------
 
 resource "random_string" "suffix" {
   length  = 4
@@ -28,34 +26,10 @@ resource "random_password" "db_password" {
   special = false
 }
 
-resource "azurerm_key_vault_secret" "db_username" {
-  name         = "backend-db-username"
-  value        = "postgres"
-  key_vault_id = azurerm_key_vault.kv.id
-  depends_on = [
-    azurerm_role_assignment.terraform_user_kv_officer
-  ]
+resource "random_id" "jwt_secret" {
+  byte_length = 32
 }
 
-resource "azurerm_key_vault_secret" "db_password" {
-  name         = "backend-db-password"
-  value        = random_password.db_password.result
-  key_vault_id = azurerm_key_vault.kv.id
-  depends_on = [
-    azurerm_role_assignment.terraform_user_kv_officer
-  ]
-}
-
-# Container Registry
-resource "azurerm_container_registry" "acr" {
-  name                = "${replace(var.project_prefix, "-", "")}acr${random_string.suffix.result}"
-  resource_group_name = var.resource_group
-  location            = var.location
-  sku                 = "Basic"
-  admin_enabled       = false
-}
-
-# Key Vault
 resource "azurerm_key_vault" "kv" {
   name                        = "${var.project_prefix}-kv"
   location                    = var.location
@@ -68,14 +42,49 @@ resource "azurerm_key_vault" "kv" {
   enable_rbac_authorization   = true
 }
 
-# User-Assigned Identity for Workload Identity
+data "azurerm_client_config" "current" {}
+
+resource "azurerm_role_assignment" "terraform_user_kv_officer" {
+  scope                = azurerm_key_vault.kv.id
+  role_definition_name = "Key Vault Secrets Officer"
+  principal_id         = data.azurerm_client_config.current.object_id
+}
+
+resource "azurerm_key_vault_secret" "db_username" {
+  name         = "backend-db-username"
+  value        = "postgres"
+  key_vault_id = azurerm_key_vault.kv.id
+  depends_on   = [azurerm_role_assignment.terraform_user_kv_officer]
+}
+
+resource "azurerm_key_vault_secret" "db_password" {
+  name         = "backend-db-password"
+  value        = random_password.db_password.result
+  key_vault_id = azurerm_key_vault.kv.id
+  depends_on   = [azurerm_role_assignment.terraform_user_kv_officer]
+}
+
+resource "azurerm_key_vault_secret" "jwt_secret" {
+  name         = "backend-jwt-secret"
+  value        = random_id.jwt_secret.b64_std
+  key_vault_id = azurerm_key_vault.kv.id
+  depends_on   = [azurerm_role_assignment.terraform_user_kv_officer]
+}
+
+resource "azurerm_container_registry" "acr" {
+  name                = "${replace(var.project_prefix, "-", "")}acr${random_string.suffix.result}"
+  resource_group_name = var.resource_group
+  location            = var.location
+  sku                 = "Basic"
+  admin_enabled       = false
+}
+
 resource "azurerm_user_assigned_identity" "workload_identity" {
   name                = "${var.project_prefix}-workload-id"
   location            = var.location
   resource_group_name = var.resource_group
 }
 
-# Federated Credential linking Kubernetes ServiceAccount to Azure Managed Identity
 resource "azurerm_federated_identity_credential" "workload_identity_fed" {
   name                = "${var.project_prefix}-fed-credential"
   resource_group_name = var.resource_group
@@ -85,20 +94,16 @@ resource "azurerm_federated_identity_credential" "workload_identity_fed" {
   subject             = "system:serviceaccount:${var.k8s_namespace}:${var.k8s_service_account_name}"
 }
 
-# --- ROLE ASSIGNMENTS ---
-
-# 1. Grant Key Vault Secrets User to Workload Identity
 resource "azurerm_role_assignment" "workload_identity_kv_user" {
   scope                = azurerm_key_vault.kv.id
   role_definition_name = "Key Vault Secrets User"
   principal_id         = azurerm_user_assigned_identity.workload_identity.principal_id
 }
 
-# 2. Grant AcrPull to AKS Kubelet Identity
 resource "azurerm_role_assignment" "aks_acr_pull" {
-  scope                            = azurerm_container_registry.acr.id
-  role_definition_name             = "AcrPull"
-  principal_id = var.aks_kubelet_identity_object_id
+  scope                = azurerm_container_registry.acr.id
+  role_definition_name = "AcrPull"
+  principal_id         = var.aks_kubelet_identity_object_id
 }
 
 output "acr_id" { value = azurerm_container_registry.acr.id }
@@ -108,14 +113,4 @@ output "key_vault_name" { value = azurerm_key_vault.kv.name }
 output "workload_identity_client_id" {
   description = "Inject this client ID into your Helm values under global.azure.workloadIdentityClientId"
   value       = azurerm_user_assigned_identity.workload_identity.client_id
-}
-
-# Fetch current executing client config (your user/service principal)
-data "azurerm_client_config" "current" {}
-
-# Grant the executing user permissions to read/write secrets in this Key Vault
-resource "azurerm_role_assignment" "terraform_user_kv_officer" {
-  scope                = azurerm_key_vault.kv.id
-  role_definition_name = "Key Vault Secrets Officer"
-  principal_id         = data.azurerm_client_config.current.object_id
 }

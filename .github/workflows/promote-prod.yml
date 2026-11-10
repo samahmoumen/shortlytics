@@ -1,0 +1,134 @@
+name: Promote to production
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Full 40-character commit SHA already published to development ACR
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: promote-production
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      IMAGE_TAG: ${{ inputs.image_tag }}
+      DEV_RESOURCE_GROUP: shortlytics-dev-rg
+      PROD_RESOURCE_GROUP: shortlytics-prod-rg
+    steps:
+      - name: Validate requested image tag
+        shell: bash
+        run: |
+          if [[ ! "$IMAGE_TAG" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "image_tag must be a full 40-character Git commit SHA."
+            exit 1
+          fi
+
+      - name: Checkout production GitOps branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Sign in to Azure with OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID_PROD }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Resolve development and production registries
+        shell: bash
+        run: |
+          mapfile -t dev_registries < <(
+            az acr list --resource-group "$DEV_RESOURCE_GROUP" --query '[].name' --output tsv
+          )
+          mapfile -t prod_registries < <(
+            az acr list --resource-group "$PROD_RESOURCE_GROUP" --query '[].name' --output tsv
+          )
+          if [[ "${#dev_registries[@]}" -ne 1 || "${#prod_registries[@]}" -ne 1 ]]; then
+            echo "Expected exactly one ACR in each environment resource group."
+            exit 1
+          fi
+          DEV_ACR="${dev_registries[0]}"
+          PROD_ACR="${prod_registries[0]}"
+          DEV_LOGIN_SERVER="$(az acr show --name "$DEV_ACR" --query loginServer --output tsv)"
+          PROD_LOGIN_SERVER="$(az acr show --name "$PROD_ACR" --query loginServer --output tsv)"
+          echo "DEV_ACR=$DEV_ACR" >> "$GITHUB_ENV"
+          echo "PROD_ACR=$PROD_ACR" >> "$GITHUB_ENV"
+          echo "DEV_LOGIN_SERVER=$DEV_LOGIN_SERVER" >> "$GITHUB_ENV"
+          echo "PROD_LOGIN_SERVER=$PROD_LOGIN_SERVER" >> "$GITHUB_ENV"
+          az acr login --name "$DEV_ACR"
+          az acr login --name "$PROD_ACR"
+
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/v0.58.2/contrib/install.sh \
+            | sudo sh -s -- -b /usr/local/bin v0.58.2
+
+      - name: Promote the exact tested images
+        shell: bash
+        run: |
+          for component in backend frontend; do
+            SOURCE_IMAGE="$DEV_LOGIN_SERVER/shortlytics-$component:$IMAGE_TAG"
+            TARGET_IMAGE="$PROD_LOGIN_SERVER/shortlytics-$component:$IMAGE_TAG"
+            docker pull "$SOURCE_IMAGE"
+            trivy image --ignore-unfixed --exit-code 1 --severity HIGH,CRITICAL "$SOURCE_IMAGE"
+            docker tag "$SOURCE_IMAGE" "$TARGET_IMAGE"
+            docker push "$TARGET_IMAGE"
+            az acr repository update --name "$PROD_ACR" \
+              --image "shortlytics-$component:$IMAGE_TAG" \
+              --write-enabled false --delete-enabled false
+          done
+
+      - name: Resolve production runtime identity
+        shell: bash
+        run: |
+          PROD_KEY_VAULT="$(az keyvault list --resource-group "$PROD_RESOURCE_GROUP" --query '[0].name' --output tsv)"
+          IDENTITY_NAME="$(az identity list --resource-group "$PROD_RESOURCE_GROUP" --query "[?contains(name, 'workload-id')].name | [0]" --output tsv)"
+          if [[ -z "$PROD_KEY_VAULT" || -z "$IDENTITY_NAME" ]]; then
+            echo "Production Key Vault or workload identity was not found."
+            exit 1
+          fi
+          PROD_WORKLOAD_CLIENT_ID="$(az identity show --resource-group "$PROD_RESOURCE_GROUP" --name "$IDENTITY_NAME" --query clientId --output tsv)"
+          PROD_TENANT_ID="$(az account show --query tenantId --output tsv)"
+          echo "PROD_KEY_VAULT=$PROD_KEY_VAULT" >> "$GITHUB_ENV"
+          echo "PROD_WORKLOAD_CLIENT_ID=$PROD_WORKLOAD_CLIENT_ID" >> "$GITHUB_ENV"
+          echo "PROD_TENANT_ID=$PROD_TENANT_ID" >> "$GITHUB_ENV"
+
+      - name: Update production GitOps values
+        run: ./scripts/deployment/update-gitops-images.sh prod "$PROD_LOGIN_SERVER" "$IMAGE_TAG"
+
+      - name: Open production GitOps pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          PROMOTION_BRANCH="gitops/promote-$IMAGE_TAG-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          git switch -c "$PROMOTION_BRANCH"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gitops-manifests/shortlytics/values-prod.yaml
+          git commit -m "chore(gitops): promote $IMAGE_TAG to production [skip ci]"
+          git push --set-upstream origin "$PROMOTION_BRANCH"
+          gh pr create \
+            --base main \
+            --head "$PROMOTION_BRANCH" \
+            --title "Promote Shortlytics $IMAGE_TAG to production" \
+            --body "Promotes the exact backend and frontend images that were built and deployed from this commit in development. Production Argo CD sync occurs after this PR is reviewed and merged."

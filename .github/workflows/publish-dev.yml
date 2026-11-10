@@ -1,0 +1,117 @@
+name: Publish and deploy development
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [develop]
+
+permissions:
+  contents: write
+  id-token: write
+  actions: read
+
+concurrency:
+  group: publish-development
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: >-
+      ${{ github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_branch == 'develop' }}
+    runs-on: ubuntu-latest
+    environment: development
+    env:
+      SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+      DEV_RESOURCE_GROUP: shortlytics-dev-rg
+    steps:
+      - name: Checkout tested source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Ensure this is still the latest develop commit
+        id: freshness
+        shell: bash
+        run: |
+          git fetch origin develop
+          CURRENT_HEAD="$(git rev-parse origin/develop)"
+          if [[ "$CURRENT_HEAD" != "$SOURCE_SHA" ]]; then
+            echo "A newer commit is already on develop; skipping this stale deployment."
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          else
+            git checkout -B develop origin/develop
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Sign in to Azure with OIDC
+        if: steps.freshness.outputs.deploy == 'true'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID_DEV }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Resolve development registry
+        if: steps.freshness.outputs.deploy == 'true'
+        shell: bash
+        run: |
+          mapfile -t registries < <(
+            az acr list --resource-group "$DEV_RESOURCE_GROUP" --query '[].name' --output tsv
+          )
+          if [[ "${#registries[@]}" -ne 1 ]]; then
+            echo "Expected exactly one ACR in $DEV_RESOURCE_GROUP; found ${#registries[@]}."
+            exit 1
+          fi
+          ACR_NAME="${registries[0]}"
+          ACR_LOGIN_SERVER="$(az acr show --name "$ACR_NAME" --query loginServer --output tsv)"
+          echo "ACR_NAME=$ACR_NAME" >> "$GITHUB_ENV"
+          echo "ACR_LOGIN_SERVER=$ACR_LOGIN_SERVER" >> "$GITHUB_ENV"
+          az acr login --name "$ACR_NAME"
+
+      - name: Install yq
+        if: steps.freshness.outputs.deploy == 'true'
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Install Trivy
+        if: steps.freshness.outputs.deploy == 'true'
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/v0.58.2/contrib/install.sh \
+            | sudo sh -s -- -b /usr/local/bin v0.58.2
+
+      - name: Build, scan and push immutable-SHA images
+        if: steps.freshness.outputs.deploy == 'true'
+        run: ./scripts/deployment/publish-images.sh "$ACR_LOGIN_SERVER" "$SOURCE_SHA"
+
+      - name: Lock image tags against overwrite and deletion
+        if: steps.freshness.outputs.deploy == 'true'
+        shell: bash
+        run: |
+          for component in backend frontend; do
+            az acr repository update --name "$ACR_NAME" \
+              --image "shortlytics-$component:$SOURCE_SHA" \
+              --write-enabled false --delete-enabled false
+          done
+
+      - name: Update development GitOps values
+        if: steps.freshness.outputs.deploy == 'true'
+        run: ./scripts/deployment/update-gitops-images.sh dev "$ACR_LOGIN_SERVER" "$SOURCE_SHA"
+
+      - name: Commit GitOps change
+        if: steps.freshness.outputs.deploy == 'true'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gitops-manifests/shortlytics/values-dev.yaml
+          if git diff --cached --quiet; then
+            echo "GitOps values already point to this image."
+            exit 0
+          fi
+          git commit -m "chore(gitops): deploy development $SOURCE_SHA [skip ci]"
+          git push origin HEAD:develop

@@ -1,10 +1,12 @@
 global:
   environment: prod
   ingressHost: "shortlytics.com"
-
-azure:
-  keyVaultName: "shortlytics-kv-prod"
-  workloadIdentityClientId: "xxxx"
+  frontendUrl: "https://shortlytics.com"
+  imageRegistry: ""
+  azure:
+    tenantId: ""
+    keyVaultName: ""
+    workloadIdentityClientId: ""
 
 ingress:
   host: "shortlytics.com"
@@ -19,7 +21,7 @@ backend:
   image:
     tag: "v1.0.0"
   db:
-    server: "shortlytics-prod-postgres" 
+    server: "shortlytics-prod-postgres"
     name: "shortlytics-prod-db"
   resources:
     limits:
@@ -39,7 +41,7 @@ frontend:
       memory: 512Mi
     requests:
       cpu: 200m
-      memory: 256Mi 
+      memory: 256Mi
 
 postgres:
   database: "shortlytics-prod-db"

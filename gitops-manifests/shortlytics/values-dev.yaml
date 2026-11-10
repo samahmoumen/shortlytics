@@ -6,9 +6,9 @@ global:
     workloadIdentityClientId: "fea7353b-2637-4880-aa0e-daf77ee79cec"
   imageRegistry: shortlyticsdevacrr6zn.azurecr.io
   ingressHost: "dev.shortlytics.internal"
+  frontendUrl: "http://dev.shortlytics.internal"
 ingress:
   host: "dev.shortlytics.internal"
-# Surcharge des valeurs du sous-chart Backend
 backend:
   image:
     repository: shortlytics-backend
@@ -24,7 +24,6 @@ backend:
     requests:
       cpu: 250m
       memory: 384Mi
-# Surcharge des valeurs du sous-chart Frontend
 frontend:
   image:
     repository: shortlytics-frontend

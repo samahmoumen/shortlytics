@@ -1,99 +1,39 @@
-#!/bin/bash
-set -euo pipefail
+#!/usr/bin/env bash
+set -Eeuo pipefail
 
-ENV_NAME=${1:-dev}
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
 
-echo "=========================================="
-echo "Deploying environment: $ENV_NAME"
-echo "=========================================="
+ENV_NAME="${1:-dev}"
+if [[ "$ENV_NAME" != "dev" ]]; then
+  echo "This helper deploys development only. Promote production with .github/workflows/promote-prod.yml." >&2
+  exit 2
+fi
 
-# 1. Get ACR from Terraform
-echo "=== Retrieving Terraform outputs ==="
-
-cd "terraform/environments/$ENV_NAME"
-
-REGISTRY=$(terraform output -raw acr_login_server)
-
-cd ../../..
-
-echo "ACR: $REGISTRY"
-
-# 2. Unique Git tag
-TAG=$(git rev-parse --short HEAD)
-
-echo "Image tag: $TAG"
-
-# 3. Login to ACR
-echo "=== Logging into ACR ==="
-
+VALUES_FILE="gitops-manifests/shortlytics/values-dev.yaml"
+REGISTRY="$(terraform -chdir=terraform/environments/dev output -raw acr_login_server)"
+IMAGE_TAG="$(git rev-parse HEAD)"
 ACR_NAME="${REGISTRY%%.*}"
 
-az acr login --name "$ACR_NAME"
-
-# 4. Build & Push Backend
-echo "=== Build & Push Backend ==="
-
-docker buildx build \
-  --platform linux/amd64 \
-  --tag "$REGISTRY/shortlytics-backend:$TAG" \
-  --push \
-  ./backend
-
-# 5. Build & Push Frontend
-echo "=== Build & Push Frontend ==="
-
-docker buildx build \
-  --platform linux/amd64 \
-  --tag "$REGISTRY/shortlytics-frontend:$TAG" \
-  --push \
-  ./frontend
-
-# 6. Verify images
-echo "=== Verifying pushed images ==="
-
-docker buildx imagetools inspect \
-  "$REGISTRY/shortlytics-backend:$TAG"
-
-docker buildx imagetools inspect \
-  "$REGISTRY/shortlytics-frontend:$TAG"
-
-# 7. Update GitOps
-echo "=== Updating GitOps manifests ==="
-
-VALUES_FILE="gitops-manifests/shortlytics/values-${ENV_NAME}.yaml"
-
-if [ ! -f "$VALUES_FILE" ]; then
-  echo "ERROR: $VALUES_FILE not found"
+if [[ -n "$(git status --porcelain)" ]]; then
+  echo "Working tree must be clean before building and committing GitOps changes." >&2
   exit 1
 fi
 
-if [[ "$OSTYPE" == "darwin"* ]]; then
-  sed -i '' \
-    "s/tag: \".*\"/tag: \"$TAG\"/g" \
-    "$VALUES_FILE"
-else
-  sed -i \
-    "s/tag: \".*\"/tag: \"$TAG\"/g" \
-    "$VALUES_FILE"
-fi
+az acr login --name "$ACR_NAME"
+./scripts/deployment/publish-images.sh "$REGISTRY" "$IMAGE_TAG"
+for component in backend frontend; do
+  az acr repository update --name "$ACR_NAME" \
+    --image "shortlytics-$component:$IMAGE_TAG" \
+    --write-enabled false --delete-enabled false
+done
 
-# 8. Git commit
-echo "=== Committing GitOps changes ==="
+./scripts/deployment/update-gitops-images.sh dev "$REGISTRY" "$IMAGE_TAG"
 
-CURRENT_BRANCH=$(git branch --show-current)
-
+git config user.name "${GIT_AUTHOR_NAME:-Shortlytics deploy}"
+git config user.email "${GIT_AUTHOR_EMAIL:-shortlytics-deploy@users.noreply.github.com}"
 git add "$VALUES_FILE"
+git commit -m "chore(gitops): deploy development $IMAGE_TAG"
+git push origin HEAD:"$(git branch --show-current)"
 
-if git diff --cached --quiet; then
-  echo "No GitOps changes detected."
-else
-  git commit \
-    -m "chore(gitops): update $ENV_NAME image tags to $TAG"
-
-  git push origin "$CURRENT_BRANCH"
-fi
-
-echo "=========================================="
-echo "Deployment completed successfully."
-echo "ArgoCD will synchronize the new images."
-echo "=========================================="
+echo "Development image tags updated. Argo CD will reconcile the GitOps commit."

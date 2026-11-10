@@ -35,7 +35,7 @@ spec:
             - name: SPRING_PROFILES_ACTIVE
               value: {{ .Values.global.environment | default "dev" | quote }}
             - name: FRONTEND_URL
-              value: "http://{{ .Values.global.ingressHost }}"
+              value: {{ .Values.global.frontendUrl | default (printf "http://%s" .Values.global.ingressHost) | quote }}
             - name: DB_URL
               value: "jdbc:postgresql://{{ .Values.db.server }}:5432/{{ .Values.db.name }}"
             - name: DB_USERNAME

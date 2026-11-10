@@ -1,0 +1,10 @@
+**/.git
+**/.github
+**/.terraform
+**/node_modules
+**/target
+**/dist
+**/.env
+**/.env.*
+**/*.tfstate
+**/*.tfplan
